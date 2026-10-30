@@ -1,0 +1,1 @@
+// sincronixar e loop de event0s

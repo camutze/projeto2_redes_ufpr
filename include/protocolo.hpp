@@ -1,0 +1,1 @@
+// structs do pacote, constantes e enums
