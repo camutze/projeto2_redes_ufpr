@@ -1,0 +1,32 @@
+Montar uma rede em anel com 4 máquinas sobre a Ethernet usando Socket Datagram com passagem de bastão.
+
+Implementar um jogo de roleta distrbuído sobre o anel seguindo as redes abaixo
+
+Em duplas
+
+Valor: 20 pontos
+
+Pode usar qualquer linguagem de programação
+
+Trabalhos com usar de IA tem nota igual a 0
+
+Não fazer um servidor mandando nas comunicações
+
+Não usar broadcast
+
+Criar o protocolo de comunicação
+
+Entregar:
+
+UFPR Virtual - um pdf com o protocolo definido + um arquivo tez com o código do trabalho
+Na apresentação - trazer o protocolo e o relatório impresso
+Regras do jogo:
+
+Todos os jogadores começam com x fichas
+A cada rodada um usuário é a roleta (servidor) - ex: A é a roleta / B, C, D são os jogadores
+Servidor espera os jogadores apostarem (1ª mensagem do servidor)
+Servidor coletas as apostas e adiciona elas ao seu pote
+Servidor gira a roleta e contabiliza os ganhos
+Servidor paga os prêmios (2ª mensagem do servidor). Pagamento é subtraído do pote do servidor
+Apostas mínimas que devem ser implementadas: Número / Pretos / Vermelhjos / Pares / Impares
+
