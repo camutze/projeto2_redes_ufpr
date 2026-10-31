@@ -99,7 +99,7 @@ int main(int argc, char* argv[]) {
                     pacote.tipo_mensagem = MSG_COLETA_APOSTAS;
                     pacote.id_roleta_atual = 'A';
 
-                    // O nó A é a 1ª roleta: faz sua aposta e passa para B coletar as dele
+                    // A maquina A faz sua aposta e passa para vai passando para o B
                     capturar_aposta_usuario(&pacote, meu_id);
                     enviar_pacote(sock_fd, &pacote, ip_sucessor, porta_sucessora);
                 }

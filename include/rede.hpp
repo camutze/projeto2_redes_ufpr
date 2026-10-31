@@ -9,7 +9,7 @@ int criar_socket_udp();
 // Define um tempo limite de espera para o recvfrom nao bloquear para sempre
 int configurar_timeout(int sock_fd, int segundos);
 
-// Associa o socket a porta local do no da rede (bind)
+// Associa o socket a porta local do no da rede (bind). Registra a sua porta de escuta no sistema operacional
 int vincular_porta(int sock_fd, int porta_local);
 
 // Envia a struct do pacote diretamente para o IP e Porta do sucessor (sendto)
