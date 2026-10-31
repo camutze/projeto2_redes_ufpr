@@ -5,7 +5,7 @@ SRC = src/main.cpp src/rede.cpp src/jogo.cpp
 TARGET = roleta
 
 all:
-	$(CXX) $(CXXFLAGS) $(SRC) -o $(TARGET)
+	clear && $(CXX) $(CXXFLAGS) $(SRC) -o $(TARGET)
 
 clean:
 	rm -f $(TARGET)

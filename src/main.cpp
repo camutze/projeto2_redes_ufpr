@@ -6,7 +6,28 @@
 #include "protocolo.hpp"
 #include "rede.hpp"
 
+void imprime_cabecalho(char *meu_id, const char **ip_local,int *porta_local, const char **ip_sucessor, int *porta_sucessora) {
+    std::cout << "==================================================\n";
+    std::cout << " TRABALHO 2 - REDES DE COMPUTADORES - UFPR\n";
+    std::cout << "==================================================\n";
+    std::cout << " Autor: Carlos e Kaio\n";
+    std::cout << "==================================================\n";
+    std::cout << " ID do no: " << *meu_id << "\n";
+    std::cout << " IP local: ";
+    std::cout << *ip_local << "\n";
+    std::cout << " Porta local: " << *porta_local << "\n";
+    std::cout << " IP do sucessor: " << *ip_sucessor << "\n";
+    std::cout << " Porta do sucessor: " << *porta_sucessora << "\n";
+    std::cout << "==================================================\n\n";
+
+}
+
 int main(int argc, char* argv[]) {
+    int sock_fd, porta_local, porta_sucessora, bytes;
+    char meu_id;
+    const char* ip_sucessor;
+    const char* ip_local;
+
     // Valida se o utilizador passou os 4 argumentos obrigatorios
     if (argc < 5) {
         std::cout << "Uso correto: " << argv[0] << " <ID> <PORTA_LOCAL> <IP_SUCESSOR> <PORTA_SUCESSORA>\n";
@@ -18,21 +39,15 @@ int main(int argc, char* argv[]) {
     }
 
     // Extrai os parametros de texto para variaveis
-    char meu_id = argv[1][0];                  // A
-    int porta_local = std::atoi(argv[2]);      // 6767 kaio que fez essa exigencia
-    const char* ip_sucessor = argv[3];         // 192.168.18,78
-    int porta_sucessora = std::atoi(argv[4]);  // 6768 - da pra usar a mesma porta se o ip for diferente
+    ip_local = obter_ip_local();
+    meu_id = argv[1][0];                   // A
+    porta_local = std::atoi(argv[2]);      // 6767 kaio que fez essa exigencia
+    ip_sucessor = argv[3];                 // 192.168.18,78
+    porta_sucessora = std::atoi(argv[4]);  // 6768 - da pra usar a mesma porta se o ip for diferente
 
-    std::cout << "\n========================================\n";
-    std::cout << "=======TRABALHO 2 - REDES 1 UFPR========\n";
-    std::cout << "========================================\n";
-    std::cout << " INICIANDO NÓ " << meu_id << "\n";
-    std::cout << " Porta Local: " << porta_local << "\n";
-    std::cout << " Sucessor:    " << ip_sucessor << ":" << porta_sucessora << "\n";
-    std::cout << "========================================\n\n";
-
+    imprime_cabecalho(&meu_id, &ip_local, &porta_local, &ip_sucessor, &porta_sucessora);
     // cria o socket UDP
-    int sock_fd = criar_socket_udp();
+    sock_fd = criar_socket_udp();
     if (sock_fd < 0) return 1;
 
     // vincula a porta local para escutar mensagens
@@ -58,7 +73,7 @@ int main(int argc, char* argv[]) {
     }
 
     while (true) {
-        int bytes = receber_pacote(sock_fd, &pacote);
+        bytes = receber_pacote(sock_fd, &pacote);  // Recebe um pacote e preenche a struct PacoteAnel com os dados recebidos
 
         // Se o recvfrom retornar -1, significa que ocorreu Timeout (nenhum pacote chegou)
         if (bytes < 0) {
@@ -99,7 +114,7 @@ int main(int argc, char* argv[]) {
                     pacote.tipo_mensagem = MSG_COLETA_APOSTAS;
                     pacote.id_roleta_atual = 'A';
 
-                    // A maquina A faz sua aposta e passa para vai passando para o B
+                    // A maquina A faz sua aposta e passa para vai passando para o
                     capturar_aposta_usuario(&pacote, meu_id);
                     enviar_pacote(sock_fd, &pacote, ip_sucessor, porta_sucessora);
                 }

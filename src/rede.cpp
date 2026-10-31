@@ -62,11 +62,11 @@ int enviar_pacote(int sock_fd, const PacoteAnel* pacote, const char* ip_destino,
         return -1;
     }
 
-    int tamanho_destino = sizeof(endereco_destino);
+    socklen_t tamanho_destino = sizeof(endereco_destino);
 
     // Envia o bloco de memoria exato da struct PacoteAnel
     ssize_t bytes_enviados = sendto(sock_fd, pacote, sizeof(PacoteAnel), 0,
-                                    (struct sockaddr*)&endereco_destino, tamanho_destino); //aqui passa com copia e no recvfrom como referencia
+                                    (struct sockaddr*)&endereco_destino, tamanho_destino);  // aqui passa com copia e no recvfrom como referencia
 
     if (bytes_enviados < 0) {
         perror("[ERRO REDE] Falha ao enviar pacote via sendto");
@@ -90,4 +90,36 @@ int receber_pacote(int sock_fd, PacoteAnel* pacote) {
     }
 
     return (int)bytes_recebidos;
+}
+
+const char* obter_ip_local() {
+    // ocket UDP temporario
+    int sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock < 0) {
+        return "127.0.0.1"; // Se falhar, assume loopback
+    }
+
+    // mando para um destino ficticio
+    struct sockaddr_in alvo_ficticio;
+    std::memset(&alvo_ficticio, 0, sizeof(alvo_ficticio));
+    alvo_ficticio.sin_family = AF_INET;
+    alvo_ficticio.sin_addr.s_addr = inet_addr("8.8.8.8");
+    alvo_ficticio.sin_port = htons(53);
+
+    // connect apenas consulta a tabela de rotas do Linux
+    if (connect(sock, (struct sockaddr*)&alvo_ficticio, sizeof(alvo_ficticio)) < 0) {
+        close(sock);
+        return "127.0.0.1";
+    }
+
+    //descobre qual IP a placa de rede atribuiu para essa saida
+    struct sockaddr_in endereco_local;
+    socklen_t tamanho = sizeof(endereco_local);
+    getsockname(sock, (struct sockaddr*)&endereco_local, &tamanho);
+
+    // fecha o socket temporario
+    close(sock);
+
+    // converte a estrutura de IP para char
+    return inet_ntoa(endereco_local.sin_addr);
 }
