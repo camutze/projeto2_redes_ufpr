@@ -1,15 +1,18 @@
 #include "jogo.hpp"
-#include <iostream>
+
+#include <cctype>
 #include <cstdlib>
 #include <ctime>
-#include <cctype>
+#include <iostream>
 
 int obter_indice_jogador(char id) {
-    char id_upper = std::toupper(id);
-    return id_upper - 'A';
+    char id_upper = std::toupper(id);  // Converte para maiúscula
+    return id_upper - 'A';             // Retorna 0 para 'A', 1 para 'B', 2 para 'C' e 3 para 'D'
 }
 
 void inicializar_partida(PacoteAnel* pacote, unsigned int fichas_iniciais) {
+    pacote->sincronizado = true;  // se chego aqui significa que o anel esta sincronizado e posso enviar mensagens de jogo
+
     for (int i = 0; i < 4; i++) {
         pacote->jogadores[i].fichas = fichas_iniciais;
         pacote->jogadores[i].apostou = false;
@@ -23,6 +26,8 @@ void inicializar_partida(PacoteAnel* pacote, unsigned int fichas_iniciais) {
 void capturar_aposta_usuario(PacoteAnel* pacote, char meu_id) {
     int idx = obter_indice_jogador(meu_id);
     EstadoJogador* meu_slot = &pacote->jogadores[idx];
+    char opcao;
+    unsigned int valor = 0;
 
     if (meu_slot->fichas == 0) {
         std::cout << "\n[JOGO] Voce esta sem fichas e nao pode apostar nesta rodada!\n";
@@ -44,7 +49,6 @@ void capturar_aposta_usuario(PacoteAnel* pacote, char meu_id) {
     std::cout << "  [X] Nao apostar nesta rodada\n";
     std::cout << "Escolha a modalidade: ";
 
-    char opcao;
     std::cin >> opcao;
     opcao = std::toupper(opcao);
 
@@ -56,7 +60,6 @@ void capturar_aposta_usuario(PacoteAnel* pacote, char meu_id) {
         return;
     }
 
-    unsigned int valor = 0;
     do {
         std::cout << "Informe o valor da aposta (1 a " << meu_slot->fichas << "): ";
         std::cin >> valor;
@@ -116,11 +119,15 @@ void processar_roleta_e_premios(PacoteAnel* pacote) {
         if (j->tipo_aposta == APOSTA_NUMERO && j->num_escolhido == (unsigned int)sorteado) {
             ganhou = true;
             multiplicador = 35;
-        } else if (sorteado != 0) { // O Zero faz perder apostas de cores/paridade
-            if (j->tipo_aposta == APOSTA_VERMELHO && e_vermelho(sorteado)) ganhou = true;
-            else if (j->tipo_aposta == APOSTA_PRETO && !e_vermelho(sorteado)) ganhou = true;
-            else if (j->tipo_aposta == APOSTA_PAR && (sorteado % 2 == 0)) ganhou = true;
-            else if (j->tipo_aposta == APOSTA_IMPAR && (sorteado % 2 != 0)) ganhou = true;
+        } else if (sorteado != 0) {  // O Zero faz perder apostas de cores/paridade
+            if (j->tipo_aposta == APOSTA_VERMELHO && e_vermelho(sorteado))
+                ganhou = true;
+            else if (j->tipo_aposta == APOSTA_PRETO && !e_vermelho(sorteado))
+                ganhou = true;
+            else if (j->tipo_aposta == APOSTA_PAR && (sorteado % 2 == 0))
+                ganhou = true;
+            else if (j->tipo_aposta == APOSTA_IMPAR && (sorteado % 2 != 0))
+                ganhou = true;
         }
 
         if (ganhou) {
@@ -138,15 +145,18 @@ void processar_roleta_e_premios(PacoteAnel* pacote) {
 }
 
 void exibir_placar(const PacoteAnel* pacote, char meu_id) {
+    char id_jogador;
+
     std::cout << "\n--------------------------------------------------\n";
     std::cout << " PLACAR DA RODADA (Roleta Atual: " << pacote->id_roleta_atual << ")\n";
     std::cout << "--------------------------------------------------\n";
+
     for (int i = 0; i < 4; i++) {
-        char id_jogador = 'A' + i;
+        id_jogador = 'A' + i;
         const EstadoJogador* j = &pacote->jogadores[i];
 
         std::cout << " Jogador " << id_jogador;
-        if (id_jogador == meu_id) std::cout << " (VOCE)";
+        if (id_jogador == meu_id) std::cout << " (VOCE)";  // Marca o jogador atual
         std::cout << ": Saldo = " << j->fichas << " fichas | ";
 
         if (j->resultado_rodada > 0) {
@@ -158,4 +168,11 @@ void exibir_placar(const PacoteAnel* pacote, char meu_id) {
         }
     }
     std::cout << "--------------------------------------------------\n\n";
+}
+
+int alguem_faliu(const PacoteAnel* pacote) {
+    for (int i = 0; i < 4; i++)
+        if (pacote->jogadores[i].fichas == 0) return 1;  // Retorna 1 se algum jogador faliu
+
+    return 0;
 }

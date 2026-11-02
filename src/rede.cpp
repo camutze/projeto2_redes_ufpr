@@ -51,6 +51,10 @@ int vincular_porta(int sock_fd, int porta_local) {
 
 int enviar_pacote(int sock_fd, const PacoteAnel* pacote, const char* ip_destino, int porta_destino) {
     struct sockaddr_in endereco_destino;
+    socklen_t tamanho_destino;
+    ssize_t bytes_enviados;
+    bytes_enviados = -1;  // tive que forcar o erro
+
     memset(&endereco_destino, 0, sizeof(endereco_destino));
 
     endereco_destino.sin_family = AF_INET;             // define a familia Ipv4, mesma coisa
@@ -62,15 +66,16 @@ int enviar_pacote(int sock_fd, const PacoteAnel* pacote, const char* ip_destino,
         return -1;
     }
 
-    socklen_t tamanho_destino = sizeof(endereco_destino);
+    tamanho_destino = sizeof(endereco_destino);
 
     // Envia o bloco de memoria exato da struct PacoteAnel
-    ssize_t bytes_enviados = sendto(sock_fd, pacote, sizeof(PacoteAnel), 0,
-                                    (struct sockaddr*)&endereco_destino, tamanho_destino);  // aqui passa com copia e no recvfrom como referencia
+    bytes_enviados = sendto(sock_fd, pacote, sizeof(PacoteAnel), 0,
+                            (struct sockaddr*)&endereco_destino,
+                            tamanho_destino);  // aqui passa com copia e no recvfrom como referencia
 
     if (bytes_enviados < 0) {
         perror("[ERRO REDE] Falha ao enviar pacote via sendto");
-        return -1;
+        return bytes_enviados;
     }
 
     return 0;
@@ -79,29 +84,28 @@ int enviar_pacote(int sock_fd, const PacoteAnel* pacote, const char* ip_destino,
 int receber_pacote(int sock_fd, PacoteAnel* pacote) {
     struct sockaddr_in endereco_origem;
     socklen_t tamanho_origem = sizeof(endereco_origem);
+    ssize_t bytes_recebidos;
+    bytes_recebidos = -1;
 
     // Preenche a struct apontada pelo ponteiro pacote com os bytes vindos do socket
-    ssize_t bytes_recebidos = recvfrom(sock_fd, pacote, sizeof(PacoteAnel), 0,
-                                       (struct sockaddr*)&endereco_origem, &tamanho_origem);
+    bytes_recebidos = recvfrom(sock_fd, pacote, sizeof(PacoteAnel), 0,
+                               (struct sockaddr*)&endereco_origem,
+                               &tamanho_origem);
 
-    if (bytes_recebidos < 0) {
-        // Pode falhar por timeout (SO_RCVTIMEO) ou erro de socket
-        return -1;
-    }
+    if (bytes_recebidos < 0) return -1; // apaguei a mensgem pois estava poluindo o terminal
 
     return (int)bytes_recebidos;
 }
 
 const char* obter_ip_local() {
-    // ocket UDP temporario
+    // socket UDP temporario
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sock < 0) {
-        return "127.0.0.1"; // Se falhar, assume loopback
-    }
+    struct sockaddr_in alvo_ficticio;
+
+    if (sock < 0) return "127.0.0.1";  // Se falhar, assume loopback
 
     // mando para um destino ficticio
-    struct sockaddr_in alvo_ficticio;
-    std::memset(&alvo_ficticio, 0, sizeof(alvo_ficticio));
+    std::memset(&alvo_ficticio, 0, sizeof(alvo_ficticio));  // zera a struct para evitar lixo de memoria
     alvo_ficticio.sin_family = AF_INET;
     alvo_ficticio.sin_addr.s_addr = inet_addr("8.8.8.8");
     alvo_ficticio.sin_port = htons(53);
@@ -112,7 +116,7 @@ const char* obter_ip_local() {
         return "127.0.0.1";
     }
 
-    //descobre qual IP a placa de rede atribuiu para essa saida
+    // descobre qual IP a placa de rede atribuiu para essa saida
     struct sockaddr_in endereco_local;
     socklen_t tamanho = sizeof(endereco_local);
     getsockname(sock, (struct sockaddr*)&endereco_local, &tamanho);
@@ -120,6 +124,6 @@ const char* obter_ip_local() {
     // fecha o socket temporario
     close(sock);
 
-    // converte a estrutura de IP para char
+    // converte a estrutura de IP para char e retorna
     return inet_ntoa(endereco_local.sin_addr);
 }

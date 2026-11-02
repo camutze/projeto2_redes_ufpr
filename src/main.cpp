@@ -6,7 +6,9 @@
 #include "protocolo.hpp"
 #include "rede.hpp"
 
-void imprime_cabecalho(char *meu_id, const char **ip_local,int *porta_local, const char **ip_sucessor, int *porta_sucessora) {
+// usar no proximo #using namespace std;
+
+void imprime_cabecalho(char* meu_id, const char** ip_local, int* porta_local, const char** ip_sucessor, int* porta_sucessora) {
     std::cout << "==================================================\n";
     std::cout << " TRABALHO 2 - REDES DE COMPUTADORES - UFPR\n";
     std::cout << "==================================================\n";
@@ -19,14 +21,14 @@ void imprime_cabecalho(char *meu_id, const char **ip_local,int *porta_local, con
     std::cout << " IP do sucessor: " << *ip_sucessor << "\n";
     std::cout << " Porta do sucessor: " << *porta_sucessora << "\n";
     std::cout << "==================================================\n\n";
-
 }
 
 int main(int argc, char* argv[]) {
-    int sock_fd, porta_local, porta_sucessora, bytes;
-    char meu_id;
+    PacoteAnel pacote;
+    int sock_fd, porta_local, porta_sucessora, bytes, idx_atual;
     const char* ip_sucessor;
     const char* ip_local;
+    char meu_id, proximo_id;
 
     // Valida se o utilizador passou os 4 argumentos obrigatorios
     if (argc < 5) {
@@ -38,12 +40,13 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // Extrai os parametros de texto para variaveis
+    // Incializa variaveis com os argumentos
     ip_local = obter_ip_local();
-    meu_id = argv[1][0];                   // A
-    porta_local = std::atoi(argv[2]);      // 6767 kaio que fez essa exigencia
-    ip_sucessor = argv[3];                 // 192.168.18,78
-    porta_sucessora = std::atoi(argv[4]);  // 6768 - da pra usar a mesma porta se o ip for diferente
+    meu_id = argv[1][0];                      // A
+    porta_local = std::atoi(argv[2]);         // 6767 kaio que fez essa exigencia
+    ip_sucessor = argv[3];                    // 192.168.18,78
+    porta_sucessora = std::atoi(argv[4]);     // 6768 - da pra usar a mesma porta se o ip for diferente
+    std::memset(&pacote, 0, sizeof(pacote));  // mesma coisa, zera tudo pra evitar lixo de memoria
 
     imprime_cabecalho(&meu_id, &ip_local, &porta_local, &ip_sucessor, &porta_sucessora);
     // cria o socket UDP
@@ -53,24 +56,20 @@ int main(int argc, char* argv[]) {
     // vincula a porta local para escutar mensagens
     if (vincular_porta(sock_fd, porta_local) < 0) return 1;
 
-    // define timeout de 2 segundos para o recvfrom nao congelar para sempre
-    configurar_timeout(sock_fd, 2);
-
-    PacoteAnel pacote;
-    std::memset(&pacote, 0, sizeof(pacote));
+    // define timeout para o recvfrom nao congelar para sempre
+    configurar_timeout(sock_fd, TIMEOUT);
 
     if (meu_id == 'A') {
-        std::cout << "[SISTEMA] Pressione ENTER para testar e fechar o anel...";
+        std::cout << "Pressione ENTER para testar e fechar o anel...";
         std::cin.get();
 
         pacote.tipo_mensagem = MSG_INIT;
-        pacote.id_roleta_atual = 'A';
+        pacote.id_roleta_atual = meu_id;
 
-        std::cout << "[HANDSHAKE] Disparando MSG_INIT para o anel...\n";
-        enviar_pacote(sock_fd, &pacote, ip_sucessor, porta_sucessora);
-    } else {
-        std::cout << "[SISTEMA] Aguardando sinal de conexao do anel...\n";
-    }
+        std::cout << "[SINCRONIZANDO] Disparando MSG_INIT para o B...\n";
+        // enviar_pacote(sock_fd, &pacote, ip_sucessor, porta_sucessora);
+    } else
+        std::cout << "[SINCRONIZANDO] Aguardando sinal de conexao do anel...\n";
 
     while (true) {
         bytes = receber_pacote(sock_fd, &pacote);  // Recebe um pacote e preenche a struct PacoteAnel com os dados recebidos
@@ -81,20 +80,28 @@ int main(int argc, char* argv[]) {
             if (meu_id == 'A' && pacote.tipo_mensagem == MSG_INIT) {
                 std::cout << "[TIMEOUT] Anel ainda nao respondeu. Retransmitindo MSG_INIT...\n";
                 enviar_pacote(sock_fd, &pacote, ip_sucessor, porta_sucessora);
+            } else if (pacote.sincronizado == true) {
+                std::cout << "[TIMEOUT] Pacote sincronizado - Aguardando Apostas...\n";
             }
             continue;  // Volta ao inicio do while para tentar escutar novamente
         }
 
+        if (alguem_faliu(&pacote)) {
+            std::cout << " Algum jogador faliu! Encerrando o jogo...\n";
+            return 0;
+        }
+
+        
         // Se um pacote valido chegou, tratamos de acordo com o tipo
         switch (pacote.tipo_mensagem) {
             case MSG_INIT:
                 std::cout << "[REDE] Pacote MSG_INIT recebido.\n";
                 if (meu_id == 'A') {
-                    std::cout << "[HANDSHAKE] Anel verificado com sucesso! Disparando MSG_START...\n";
+                    std::cout << "[SINCRONIZADO] Anel verificado com sucesso! Disparando MSG_START...\n";
                     pacote.tipo_mensagem = MSG_START;
                     enviar_pacote(sock_fd, &pacote, ip_sucessor, porta_sucessora);
                 } else {
-                    std::cout << "[REDE] Repassando MSG_INIT para o sucessor...\n";
+                    std::cout << "[SINCRONIZANDO] Repassando MSG_INIT para o sucessor...\n";
                     enviar_pacote(sock_fd, &pacote, ip_sucessor, porta_sucessora);
                 }
                 break;
@@ -102,19 +109,19 @@ int main(int argc, char* argv[]) {
             case MSG_START:
                 std::cout << "[REDE] Pacote MSG_START recebido!\n";
                 if (meu_id != 'A') {
-                    std::cout << "[SISTEMA] Anel 100% Sincronizado. Entrando em modo de jogo!\n";
+                    std::cout << "Anel SINCRONIZADO. Entrando em modo de jogo!\n";
                     enviar_pacote(sock_fd, &pacote, ip_sucessor, porta_sucessora);
                 } else {
                     std::cout << "\n==================================================\n";
                     std::cout << " REDE PRONTA E SINCRONIZADA! O JOGO VAI COMECAR.\n";
                     std::cout << "==================================================\n\n";
 
-                    // Inicializa a partida com 100 fichas para todo mundo
-                    inicializar_partida(&pacote, 100);
+                    // Inicializa a partida
+                    inicializar_partida(&pacote, FICHAS_INICIAIS);
                     pacote.tipo_mensagem = MSG_COLETA_APOSTAS;
                     pacote.id_roleta_atual = 'A';
 
-                    // A maquina A faz sua aposta e passa para vai passando para o
+                    // A maquina A faz sua aposta e passa para o proximo no
                     capturar_aposta_usuario(&pacote, meu_id);
                     enviar_pacote(sock_fd, &pacote, ip_sucessor, porta_sucessora);
                 }
@@ -137,14 +144,18 @@ int main(int argc, char* argv[]) {
 
             case MSG_PAGAMENTO:
                 // Todos os nós (Roleta e Jogadores) mostram o placar atualizado
+
                 exibir_placar(&pacote, meu_id);
 
                 if (pacote.id_roleta_atual == meu_id) {
                     // A roleta confirma que todos viram o placar e passa o bastão pro próximo
                     std::cout << "[ROLETA] Placar exibido. Passando a roleta para o proximo no...\n";
 
-                    int idx_atual = obter_indice_jogador(meu_id);
-                    char proximo_id = 'A' + ((idx_atual + 1) % 4);
+                    idx_atual = obter_indice_jogador(meu_id);
+
+                    // a logica funcinona assim:
+                    // se eu sou o A idx=0, o proximo e o B idx=1, se eu sou o D idx=3, o proximo e o A idx=0
+                    proximo_id = 'A' + ((idx_atual + 1) % 4);
 
                     pacote.tipo_mensagem = MSG_PASSA_ROLETA;
                     pacote.id_proxima_roleta = proximo_id;
@@ -171,6 +182,10 @@ int main(int argc, char* argv[]) {
                     enviar_pacote(sock_fd, &pacote, ip_sucessor, porta_sucessora);
                 }
                 break;
+
+            case MSG_OVER:
+                std::cout << "[SISTEMA] Pacote MSG_OVER recebido. Encerrando o jogo...\n";
+                return 0;
 
             default:
                 std::cout << "[AVISO] Pacote com tipo desconhecido: " << pacote.tipo_mensagem << "\n";
