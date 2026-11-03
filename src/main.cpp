@@ -86,12 +86,6 @@ int main(int argc, char* argv[]) {
             continue;  // Volta ao inicio do while para tentar escutar novamente
         }
 
-        if (alguem_faliu(&pacote)) {
-            std::cout << " Algum jogador faliu! Encerrando o jogo...\n";
-            return 0;
-        }
-
-        
         // Se um pacote valido chegou, tratamos de acordo com o tipo
         switch (pacote.tipo_mensagem) {
             case MSG_INIT:
@@ -159,11 +153,15 @@ int main(int argc, char* argv[]) {
 
                     pacote.tipo_mensagem = MSG_PASSA_ROLETA;
                     pacote.id_proxima_roleta = proximo_id;
-                    enviar_pacote(sock_fd, &pacote, ip_sucessor, porta_sucessora);
-                } else {
-                    // Jogador comum repassa a mensagem de pagamento
-                    enviar_pacote(sock_fd, &pacote, ip_sucessor, porta_sucessora);
                 }
+
+                enviar_pacote(sock_fd, &pacote, ip_sucessor, porta_sucessora);
+
+                if (alguem_faliu(&pacote)) {
+                    std::cout << " Algum jogador faliu! Encerrando o jogo...\n";
+                    exit(0);
+                }
+
                 break;
 
             case MSG_PASSA_ROLETA:
