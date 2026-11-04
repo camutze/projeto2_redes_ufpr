@@ -1,0 +1,3 @@
+Na hora de escolher o tipo de socket, usaremos o DGRAM pois nao precisa tratar  
+
+sendto() envia um datagrama isolado e o recvfrom() lê a struct inteira do outro lado de uma vez
