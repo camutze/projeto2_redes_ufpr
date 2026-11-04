@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
     int sock_fd, porta_local, porta_sucessora, bytes, idx_atual;
     const char* ip_sucessor;
     const char* ip_local;
-    char meu_id, proximo_id;
+    char meu_id;
 
     // Valida se o utilizador passou os 4 argumentos obrigatorios
     if (argc < 5) {
@@ -128,12 +128,10 @@ int main(int argc, char* argv[]) {
                     processar_roleta_e_premios(&pacote);
 
                     pacote.tipo_mensagem = MSG_PAGAMENTO;
-                    enviar_pacote(sock_fd, &pacote, ip_sucessor, porta_sucessora);
-                } else {
-                    // Jogador comum: abre terminal de aposta e repassa pro próximo
-                    capturar_aposta_usuario(&pacote, meu_id);
-                    enviar_pacote(sock_fd, &pacote, ip_sucessor, porta_sucessora);
-                }
+                } else
+                    capturar_aposta_usuario(&pacote, meu_id);  // Jogador comum: abre terminal de aposta e repassa pro próximo
+
+                enviar_pacote(sock_fd, &pacote, ip_sucessor, porta_sucessora);
                 break;
 
             case MSG_PAGAMENTO:
@@ -149,10 +147,9 @@ int main(int argc, char* argv[]) {
 
                     // a logica funcinona assim:
                     // se eu sou o A idx=0, o proximo e o B idx=1, se eu sou o D idx=3, o proximo e o A idx=0
-                    proximo_id = 'A' + ((idx_atual + 1) % 4);
+                    pacote.id_proxima_roleta = 'A' + ((idx_atual + 1) % 4);
 
                     pacote.tipo_mensagem = MSG_PASSA_ROLETA;
-                    pacote.id_proxima_roleta = proximo_id;
                 }
 
                 enviar_pacote(sock_fd, &pacote, ip_sucessor, porta_sucessora);
@@ -174,16 +171,12 @@ int main(int argc, char* argv[]) {
 
                     pacote.tipo_mensagem = MSG_COLETA_APOSTAS;
                     capturar_aposta_usuario(&pacote, meu_id);
-                    enviar_pacote(sock_fd, &pacote, ip_sucessor, porta_sucessora);
-                } else {
+                } else
                     std::cout << "[SISTEMA] Nova Roleta da rodada: " << pacote.id_roleta_atual << "\n";
-                    enviar_pacote(sock_fd, &pacote, ip_sucessor, porta_sucessora);
-                }
-                break;
 
-            case MSG_OVER:
-                std::cout << "[SISTEMA] Pacote MSG_OVER recebido. Encerrando o jogo...\n";
-                return 0;
+                enviar_pacote(sock_fd, &pacote, ip_sucessor, porta_sucessora);
+
+                break;
 
             default:
                 std::cout << "[AVISO] Pacote com tipo desconhecido: " << pacote.tipo_mensagem << "\n";
