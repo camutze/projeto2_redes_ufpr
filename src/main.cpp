@@ -12,7 +12,7 @@ void imprime_cabecalho(char* meu_id, const char** ip_local, int* porta_local, co
     std::cout << "==================================================\n";
     std::cout << " TRABALHO 2 - REDES DE COMPUTADORES - UFPR\n";
     std::cout << "==================================================\n";
-    std::cout << " Autor: Carlos e Kaio\n";
+    std::cout << " Autores: Carlos e Kaio\n";
     std::cout << "==================================================\n";
     std::cout << " ID do no: " << *meu_id << "\n";
     std::cout << " IP local: ";
@@ -93,18 +93,16 @@ int main(int argc, char* argv[]) {
                 if (meu_id == 'A') {
                     std::cout << "[SINCRONIZADO] Anel verificado com sucesso! Disparando MSG_START...\n";
                     pacote.tipo_mensagem = MSG_START;
-                    enviar_pacote(sock_fd, &pacote, ip_sucessor, porta_sucessora);
-                } else {
+                } else
                     std::cout << "[SINCRONIZANDO] Repassando MSG_INIT para o sucessor...\n";
-                    enviar_pacote(sock_fd, &pacote, ip_sucessor, porta_sucessora);
-                }
+
+                enviar_pacote(sock_fd, &pacote, ip_sucessor, porta_sucessora);
                 break;
 
             case MSG_START:
                 std::cout << "[REDE] Pacote MSG_START recebido!\n";
                 if (meu_id != 'A') {
                     std::cout << "Anel SINCRONIZADO. Entrando em modo de jogo!\n";
-                    enviar_pacote(sock_fd, &pacote, ip_sucessor, porta_sucessora);
                 } else {
                     std::cout << "\n==================================================\n";
                     std::cout << " REDE PRONTA E SINCRONIZADA! O JOGO VAI COMECAR.\n";
@@ -117,8 +115,8 @@ int main(int argc, char* argv[]) {
 
                     // A maquina A faz sua aposta e passa para o proximo no
                     capturar_aposta_usuario(&pacote, meu_id);
-                    enviar_pacote(sock_fd, &pacote, ip_sucessor, porta_sucessora);
                 }
+                enviar_pacote(sock_fd, &pacote, ip_sucessor, porta_sucessora);
                 break;
 
             case MSG_COLETA_APOSTAS:
