@@ -11,7 +11,7 @@ int obter_indice_jogador(char id) {
 }
 
 void inicializar_partida(PacoteAnel* pacote, unsigned int fichas_iniciais) {
-    pacote->sincronizado = true;  // se chego aqui significa que o anel esta sincronizado e posso enviar mensagens de jogo
+    // pacote->sincronizado = true;  // se chego aqui significa que o anel esta sincronizado e posso enviar mensagens de jogo
 
     for (int i = 0; i < 4; i++) {
         pacote->jogadores[i].fichas = fichas_iniciais;
@@ -81,12 +81,12 @@ void capturar_aposta_usuario(PacoteAnel* pacote, char meu_id) {
     std::cout << "[JOGO] Aposta registrada com sucesso!\n";
 }
 
-// Funcao auxiliar para identificar numeros vermelhos na roleta europeia
+// https://observador.pt/prognosticos/roleta-europeia/
+//  Funcao auxiliar para identificar numeros vermelhos na roleta europeia
 static bool e_vermelho(int num) {
     int vermelhos[] = {1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36};
-    for (int v : vermelhos) {
+    for (int v : vermelhos)
         if (v == num) return true;
-    }
     return false;
 }
 

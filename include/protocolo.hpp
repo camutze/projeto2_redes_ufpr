@@ -35,9 +35,9 @@ struct EstadoJogador {
 // protocolo do anel
 struct PacoteAnel {
     int tipo_mensagem;       // tipo de mensagem que eu estpu enviando no anel
-    char id_roleta_atual;    // tipo de roleta que esta enviando a mensagem, para saber se e o meu turno ou nao
+    char id_roleta_atual;    // tmake -bipo de roleta que esta enviando a mensagem, para saber se e o meu turno ou nao
     char id_proxima_roleta;  // to usando id, mas o professor recomendou usar  ip ou mac
-    bool sincronizado;  // se o anel esta sincronizado ou nao, para saber se posso enviar mensagens de jogo
+    //bool sincronizado;  // se o anel esta sincronizado ou nao, para saber se posso enviar mensagens de jogo
 
     // dados fixos para os 4 nós (0='A', 1='B', 2='C', 3='D')
     EstadoJogador jogadores[4];

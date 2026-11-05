@@ -7,6 +7,7 @@
 // regras da roleta e apostas. Inicialmente as minimas, depois se der tempo fazemos o restante
 
 // Converte o ID ('A', 'B', 'C', 'D') para o indice do array (0, 1, 2, 3)
+// para acessar o vetor
 int obter_indice_jogador(char id);
 
 // Preenche o saldo inicial de fichas para todos os nós (executado na 1ª rodada)

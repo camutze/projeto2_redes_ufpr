@@ -14,9 +14,9 @@ int criar_socket_udp() {
     // https://wiki.inf.ufpr.br/maziero/doku.php?id=pua:comunicacao_em_rede
     // AF_INET = IPv4, SOCK_DGRAM = UDP, 0 = Protocolo padrao
     int sock_fd = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sock_fd < 0) {
+    if (sock_fd < 0)
         perror("[ERRO REDE] Falha ao criar o socket UDP");
-    }
+
     return sock_fd;
 }
 
@@ -92,7 +92,7 @@ int receber_pacote(int sock_fd, PacoteAnel* pacote) {
                                (struct sockaddr*)&endereco_origem,
                                &tamanho_origem);
 
-    if (bytes_recebidos < 0) return -1; // apaguei a mensgem pois estava poluindo o terminal
+    if (bytes_recebidos < 0) return -1;  // apaguei a mensgem pois estava poluindo o terminal
 
     return (int)bytes_recebidos;
 }

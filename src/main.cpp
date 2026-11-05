@@ -30,18 +30,21 @@ int main(int argc, char* argv[]) {
     const char* ip_local;
     char meu_id;
 
+    ip_local = obter_ip_local();
     // Valida se o utilizador passou os 4 argumentos obrigatorios
-    if (argc < 5) {
-        std::cout << "Uso correto: " << argv[0] << " <ID> <PORTA_LOCAL> <IP_SUCESSOR> <PORTA_SUCESSORA>\n";
+    if (argc < 5 || (argv[1][0] < 'A' || argv[1][0] > 'D')) {
+        std::cout << "[ERRO] Argumentos invalidos!\n";
+        std::cout << "ID precisa ser A, B, C ou D.\n";
+        std::cout << "Pmakeorta local e porta sucessora precisam ser numeros inteiros.\n";
+        std::cout << "\nUso correto: " << argv[0] << " <ID> <PORTA_LOCAL> <IP_SUCESSOR> <PORTA_SUCESSORA>\n";
         std::cout << "Exemplo:     " << argv[0] << " A 6767 192.168.0.1 6768\n";
         std::cout << "\nIP DA SUA MAQUINA: \n";
-        system("hostname -I | awk '{print $1}'");
+        std::cout << ip_local << "\n";
 
         return 1;
     }
 
     // Incializa variaveis com os argumentos
-    ip_local = obter_ip_local();
     meu_id = argv[1][0];                      // A
     porta_local = std::atoi(argv[2]);         // 6767 kaio que fez essa exigencia
     ip_sucessor = argv[3];                    // 192.168.18,78
@@ -80,9 +83,8 @@ int main(int argc, char* argv[]) {
             if (meu_id == 'A' && pacote.tipo_mensagem == MSG_INIT) {
                 std::cout << "[TIMEOUT] Anel ainda nao respondeu. Retransmitindo MSG_INIT...\n";
                 enviar_pacote(sock_fd, &pacote, ip_sucessor, porta_sucessora);
-            } else if (pacote.sincronizado == true) {
-                std::cout << "[TIMEOUT] Pacote sincronizado - Aguardando Apostas...\n";
             }
+
             continue;  // Volta ao inicio do while para tentar escutar novamente
         }
 
