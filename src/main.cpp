@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) {
         std::cout << "ID precisa ser A, B, C ou D.\n";
         std::cout << "Pmakeorta local e porta sucessora precisam ser numeros inteiros.\n";
         std::cout << "\nUso correto: " << argv[0] << " <ID> <PORTA_LOCAL> <IP_SUCESSOR> <PORTA_SUCESSORA>\n";
-        std::cout << "Exemplo:     " << argv[0] << " A 6767 192.168.0.1 6768\n";
+        std::cout << "Exemplo:     " << argv[0] << " A 6767 " << ip_local << " 6768\n";
         std::cout << "\nIP DA SUA MAQUINA: \n";
         std::cout << ip_local << "\n";
 
@@ -62,6 +62,8 @@ int main(int argc, char* argv[]) {
     // define timeout para o recvfrom nao congelar para sempre
     configurar_timeout(sock_fd, TIMEOUT);
 
+
+    // caso seja o terminal A na primeira execucao
     if (meu_id == 'A') {
         std::cout << "Pressione ENTER para testar e fechar o anel...";
         std::cin.get();
@@ -168,6 +170,10 @@ int main(int argc, char* argv[]) {
                     std::cout << "\n==================================================\n";
                     std::cout << " AGORA VOCE E A ROLETA DA RODADA! (" << meu_id << ")\n";
                     std::cout << "==================================================\n";
+
+                    std::cout << "[SISTEMA] Aperte qualquer tecla para conttinuar...\n";
+                    std::cin.get();
+                    std::cin.ignore();
 
                     pacote.tipo_mensagem = MSG_COLETA_APOSTAS;
                     capturar_aposta_usuario(&pacote, meu_id);

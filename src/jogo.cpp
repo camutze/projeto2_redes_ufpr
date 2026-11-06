@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
+#include <limits>  //unicamente para resolver o problema do usuario digitar letras a mais e o programa travar, ignorando o resto do buffe
 
 int obter_indice_jogador(char id) {
     char id_upper = std::toupper(id);  // Converte para maiúscula
@@ -25,32 +26,36 @@ void inicializar_partida(PacoteAnel* pacote, unsigned int fichas_iniciais) {
 
 void capturar_aposta_usuario(PacoteAnel* pacote, char meu_id) {
     int idx = obter_indice_jogador(meu_id);
-    EstadoJogador* meu_slot = &pacote->jogadores[idx];
+    unsigned int valor = 0, num = 0;
+    
     char opcao;
-    unsigned int valor = 0;
 
-    if (meu_slot->fichas == 0) {
-        std::cout << "\n[JOGO] Voce esta sem fichas e nao pode apostar nesta rodada!\n";
-        meu_slot->apostou = true;
-        meu_slot->tipo_aposta = APOSTA_NENHUMA;
-        meu_slot->valor_aposta = 0;
-        return;
-    }
+    EstadoJogador* meu_slot = &pacote->jogadores[idx];
+    
+    std::cout << "\033[2J\033[1;1H";
 
     std::cout << "\n==================================================\n";
     std::cout << " SUA VEZ DE APOSTAR (Saldo atual: " << meu_slot->fichas << " fichas)\n";
     std::cout << "==================================================\n";
-    std::cout << "Modalidades de Aposta:\n";
-    std::cout << "  [N] Numero exato (Paga 35x)\n";
-    std::cout << "  [P] Cor Preta (Paga 1x)\n";
-    std::cout << "  [V] Cor Vermelha (Paga 1x)\n";
-    std::cout << "  [A] Numero Par (Paga 1x)\n";
-    std::cout << "  [I] Numero Impar (Paga 1x)\n";
-    std::cout << "  [X] Nao apostar nesta rodada\n";
-    std::cout << "Escolha a modalidade: ";
 
-    std::cin >> opcao;
-    opcao = std::toupper(opcao);
+    do {
+        std::cout << "Modalidades de Aposta:\n";
+        std::cout << "  [N] Numero exato (Paga 35x)\n";
+        std::cout << "  [P] Cor Preta (Paga 1x)\n";
+        std::cout << "  [V] Cor Vermelha (Paga 1x)\n";
+        std::cout << "  [A] Numero Par (Paga 1x)\n";
+        std::cout << "  [I] Numero Impar (Paga 1x)\n";
+        std::cout << "  [X] Nao apostar nesta rodada\n";
+        std::cout << "Escolha a modalidade: ";
+
+        // validando o usuario para nao ter que ficar sincronizando o anel toda vez que o usuario erra
+        std::cin >> opcao;
+        // LIMPEZA DO BUFFER: Remove qualquer letra extra que o usuário tenha digitado por erro
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+        opcao = std::toupper(opcao);
+
+    } while (opcao != 'N' && opcao != 'P' && opcao != 'V' && opcao != 'A' && opcao != 'I' && opcao != 'X');
 
     if (opcao == 'X') {
         meu_slot->tipo_aposta = APOSTA_NENHUMA;
@@ -69,7 +74,6 @@ void capturar_aposta_usuario(PacoteAnel* pacote, char meu_id) {
     meu_slot->tipo_aposta = opcao;
 
     if (opcao == 'N') {
-        unsigned int num = 0;
         do {
             std::cout << "Escolha o numero (0 a 36): ";
             std::cin >> num;
